@@ -15,6 +15,7 @@
 #include "rclcpp/subscription_base.hpp"
 
 #include <cstdio>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -25,6 +26,8 @@
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node_interfaces/node_base_interface.hpp"
 #include "rclcpp/qos_event.hpp"
+
+#include "rcutils/types/string_map.h"
 
 #include "rmw/error_handling.h"
 #include "rmw/rmw.h"
@@ -288,8 +291,7 @@ SubscriptionBase::exchange_in_use_by_wait_set_state(
   }
   throw std::runtime_error("given pointer_to_subscription_part does not match any part");
 }
-
-std::vector<rclcpp::NetworkFlow> SubscriptionBase::get_network_flow() const
+std::vector<std::map<std::string, std::string>> SubscriptionBase::get_network_flow() const
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   rcl_network_flow_array_t network_flow_array = rcl_get_zero_initialized_network_flow_array();
@@ -307,9 +309,16 @@ std::vector<rclcpp::NetworkFlow> SubscriptionBase::get_network_flow() const
     rclcpp::exceptions::throw_from_rcl_error(ret, error_msg);
   }
 
-  std::vector<rclcpp::NetworkFlow> network_flow_vector;
+  std::vector<std::map<std::string, std::string>> network_flow_vector;
   for (size_t i = 0; i < network_flow_array.size; ++i) {
-    network_flow_vector.push_back(rclcpp::NetworkFlow(network_flow_array.network_flow[i]));
+    std::map<std::string, std::string> network_flow;
+    const char * key =
+      rcutils_string_map_get_next_key(&network_flow_array.network_flow[i], nullptr);
+    while (key != NULL) {
+      network_flow[key] = rcutils_string_map_get(&network_flow_array.network_flow[i], key);
+      key = rcutils_string_map_get_next_key(&network_flow_array.network_flow[i], key);
+    }
+    network_flow_vector.push_back(network_flow);
   }
 
   ret = rcl_network_flow_array_fini(&network_flow_array, &allocator);

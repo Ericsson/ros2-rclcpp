@@ -18,11 +18,14 @@
 #include <rmw/rmw.h>
 
 #include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include "rcutils/types/string_map.h"
 
 #include "rcutils/logging_macros.h"
 #include "rmw/impl/cpp/demangle.hpp"
@@ -34,7 +37,6 @@
 #include "rclcpp/experimental/intra_process_manager.hpp"
 #include "rclcpp/logging.hpp"
 #include "rclcpp/macros.hpp"
-#include "rclcpp/network_flow.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos_event.hpp"
 
@@ -270,7 +272,7 @@ PublisherBase::default_incompatible_qos_callback(
     policy_name.c_str());
 }
 
-std::vector<rclcpp::NetworkFlow> PublisherBase::get_network_flow() const
+std::vector<std::map<std::string, std::string>> PublisherBase::get_network_flow() const
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   rcl_network_flow_array_t network_flow_array = rcl_get_zero_initialized_network_flow_array();
@@ -288,9 +290,16 @@ std::vector<rclcpp::NetworkFlow> PublisherBase::get_network_flow() const
     rclcpp::exceptions::throw_from_rcl_error(ret, error_msg);
   }
 
-  std::vector<rclcpp::NetworkFlow> network_flow_vector;
+  std::vector<std::map<std::string, std::string>> network_flow_vector;
   for (size_t i = 0; i < network_flow_array.size; ++i) {
-    network_flow_vector.push_back(rclcpp::NetworkFlow(network_flow_array.network_flow[i]));
+    std::map<std::string, std::string> network_flow;
+    const char * key =
+      rcutils_string_map_get_next_key(&network_flow_array.network_flow[i], nullptr);
+    while (key != NULL) {
+      network_flow[key] = rcutils_string_map_get(&network_flow_array.network_flow[i], key);
+      key = rcutils_string_map_get_next_key(&network_flow_array.network_flow[i], key);
+    }
+    network_flow_vector.push_back(network_flow);
   }
 
   ret = rcl_network_flow_array_fini(&network_flow_array, &allocator);

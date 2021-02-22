@@ -16,12 +16,14 @@
 #define RCLCPP__SUBSCRIPTION_BASE_HPP_
 
 #include <atomic>
+#include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <vector>
 #include <utility>
+#include <vector>
+#include <unordered_map>
 
+#include "rcl/network_flow.h"
 #include "rcl/subscription.h"
 
 #include "rmw/rmw.h"
@@ -31,7 +33,6 @@
 #include "rclcpp/experimental/subscription_intra_process_base.hpp"
 #include "rclcpp/macros.hpp"
 #include "rclcpp/message_info.hpp"
-#include "rclcpp/network_flow.hpp"
 #include "rclcpp/qos.hpp"
 #include "rclcpp/qos_event.hpp"
 #include "rclcpp/serialized_message.hpp"
@@ -266,11 +267,12 @@ public:
 
   /// Get network flow
   /**
-   * Describes network flows that this subscription is receiving messages in on
-   * \return vector of NetworkFlow
+   * Describes network flows of this subscription.
+   * The description is specific to the RMW implementation.
+   * \return vector of string->string maps
    */
   RCLCPP_PUBLIC
-  std::vector<rclcpp::NetworkFlow>
+  std::vector<std::map<std::string, std::string>>
   get_network_flow() const;
 
 protected:

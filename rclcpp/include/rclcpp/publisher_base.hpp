@@ -20,15 +20,16 @@
 
 #include <functional>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "rcl/network_flow.h"
 #include "rcl/publisher.h"
 
 #include "rclcpp/macros.hpp"
-#include "rclcpp/network_flow.hpp"
 #include "rclcpp/qos.hpp"
 #include "rclcpp/qos_event.hpp"
 #include "rclcpp/type_support_decl.hpp"
@@ -196,11 +197,12 @@ public:
 
   /// Get network flow
   /**
-   * Describes network flows that this publisher is sending messages out on
-   * \return vector of NetworkFlow
+   * Describes network flows of this publisher.
+   * The description is specific to the RMW implementation.
+   * \return vector of string->string maps
    */
   RCLCPP_PUBLIC
-  std::vector<rclcpp::NetworkFlow>
+  std::vector<std::map<std::string, std::string>>
   get_network_flow() const;
 
 protected:
